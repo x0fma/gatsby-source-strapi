@@ -26,6 +26,8 @@ exports.sourceNodes = async (
   },
   strapiConfig
 ) => {
+  const cacheKey = `${strapiConfig.prefix ? `${strapiConfig.prefix}_` : ''}${LAST_FETCHED_KEY}`;
+
   // Cast singleTypes and collectionTypes to empty arrays if they're not defined
   if (!Array.isArray(strapiConfig.singleTypes)) {
     strapiConfig.singleTypes = [];
@@ -60,7 +62,7 @@ exports.sourceNodes = async (
 
   const endpoints = getEndpoints(strapiConfig, schemas);
 
-  const lastFetched = await cache.get(LAST_FETCHED_KEY);
+  const lastFetched = await cache.get(cacheKey);
 
   const allResults = await Promise.all(
     endpoints.map(({ kind, ...config }) => {
@@ -130,7 +132,7 @@ exports.sourceNodes = async (
 
   let warnOnceForNoSupport = false;
 
-  await cache.set(LAST_FETCHED_KEY, Date.now());
+  await cache.set(cacheKey, Date.now());
 
   for (let i = 0; i < endpoints.length; i++) {
     const { uid } = endpoints[i];
