@@ -37,14 +37,21 @@ const prepareJSONNode = (json, ctx) => {
  * @returns {Object} gatsby node
  */
 const prepareRelationNode = (relation, ctx) => {
-  const { schemas, createNodeId, createContentDigest, parentNode, targetSchemaUid } = ctx;
+  const {
+    strapiConfig,
+    schemas,
+    createNodeId,
+    createContentDigest,
+    parentNode,
+    targetSchemaUid,
+  } = ctx;
 
   // const targetSchema = getContentTypeSchema(schemas, targetSchemaUid);
   // const {
   //   schema: { singularName },
   // } = targetSchema;
 
-  const nodeType = makeParentNodeName(schemas, targetSchemaUid);
+  const nodeType = makeParentNodeName(schemas, targetSchemaUid, strapiConfig.prefix);
   const relationNodeId = createNodeId(`${nodeType}-${relation.id}`);
 
   const node = {
@@ -98,9 +105,9 @@ const prepareTextNode = (text, ctx) => {
  * @returns {Object} gatsby node
  */
 const prepareMediaNode = (media, ctx) => {
-  const { createNodeId, createContentDigest, parentNode } = ctx;
+  const { createNodeId, createContentDigest, parentNode, strapiConfig } = ctx;
 
-  const nodeType = 'STRAPI__MEDIA';
+  const nodeType = `STRAPI_${strapiConfig.prefix ? `${strapiConfig.prefix}_` : ''}_MEDIA`;
   const relationNodeId = createNodeId(`${nodeType}-${media.id}`);
 
   const node = {
@@ -130,8 +137,8 @@ const prepareMediaNode = (media, ctx) => {
 export const createNodes = (entity, ctx, uid) => {
   const nodes = [];
 
-  const { schemas, createNodeId, createContentDigest, getNode } = ctx;
-  const nodeType = makeParentNodeName(schemas, uid);
+  const { strapiConfig, schemas, createNodeId, createContentDigest, getNode } = ctx;
+  const nodeType = makeParentNodeName(schemas, uid, strapiConfig.prefix);
 
   let entryNode = {
     id: createNodeId(`${nodeType}-${entity.id}`),
@@ -157,7 +164,11 @@ export const createNodes = (entity, ctx, uid) => {
       // Add support for dynamic zones
       if (type === 'dynamiczone') {
         value.forEach((v) => {
-          const componentNodeName = makeParentNodeName(schemas, v.strapi_component);
+          const componentNodeName = makeParentNodeName(
+            schemas,
+            v.strapi_component,
+            strapiConfig.prefix
+          );
 
           const valueNodes = _.flatten(createNodes(v, ctx, v.strapi_component));
           const compoNodeIds = valueNodes
@@ -181,6 +192,7 @@ export const createNodes = (entity, ctx, uid) => {
         // Create type for the first level of relations, otherwise the user should fetch the other content type
         // to link them
         const config = {
+          strapiConfig,
           schemas,
           createContentDigest,
           createNodeId,
@@ -215,7 +227,11 @@ export const createNodes = (entity, ctx, uid) => {
       // Apply transformations to components: markdown, json...
       if (type === 'component') {
         const componentSchema = getContentTypeSchema(schemas, attribute.component);
-        const componentNodeName = makeParentNodeName(schemas, componentSchema.uid);
+        const componentNodeName = makeParentNodeName(
+          schemas,
+          componentSchema.uid,
+          strapiConfig.prefix
+        );
 
         if (attribute.repeatable) {
           const compoNodes = _.flatten(value.map((v) => createNodes(v, ctx, attribute.component)));
@@ -285,6 +301,7 @@ export const createNodes = (entity, ctx, uid) => {
           createContentDigest,
           createNodeId,
           parentNode: entryNode,
+          strapiConfig,
         };
 
         if (Array.isArray(value)) {

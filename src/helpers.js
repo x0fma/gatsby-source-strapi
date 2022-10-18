@@ -41,13 +41,13 @@ const buildMapFromNodes = (nodes) => {
   }, {});
 };
 
-const buildMapFromData = (endpoints, data) => {
+const buildMapFromData = (endpoints, data, prefix) => {
   const map = {};
 
   for (let i = 0; i < endpoints.length; i++) {
     const { singularName } = endpoints[i];
 
-    const nodeType = _.toUpper(`Strapi_${_.snakeCase(singularName)}`);
+    const nodeType = _.toUpper(`Strapi_${prefix ? `${prefix}_` : ''}${_.snakeCase(singularName)}`);
 
     for (let entity of data[i]) {
       if (map[nodeType]) {
@@ -61,8 +61,8 @@ const buildMapFromData = (endpoints, data) => {
   return map;
 };
 
-const buildNodesToRemoveMap = (existingNodesMap, endpoints, data) => {
-  const newNodes = buildMapFromData(endpoints, data);
+const buildNodesToRemoveMap = (existingNodesMap, endpoints, data, prefix) => {
+  const newNodes = buildMapFromData(endpoints, data, prefix);
 
   const toRemoveMap = Object.entries(existingNodesMap).reduce((acc, [name, value]) => {
     const currentNodes = newNodes[name];
@@ -153,13 +153,13 @@ const normalizeConfig = ({ collectionTypes, singleTypes }) => {
   return [...(normalizedCollectionTypes || []), ...(normalizedSingleTypes || [])];
 };
 
-const makeParentNodeName = (schemas, uid) => {
+const makeParentNodeName = (schemas, uid, prefix) => {
   const schema = getContentTypeSchema(schemas, uid);
   const {
     schema: { singularName, kind },
   } = schema;
 
-  let nodeName = `Strapi_${_.snakeCase(singularName)}`;
+  let nodeName = `Strapi_${prefix ? `${prefix}_` : ''}${_.snakeCase(singularName)}`;
 
   const isComponentType = !['collectionType', 'singleType'].includes(kind);
 

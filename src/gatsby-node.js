@@ -114,7 +114,12 @@ exports.sourceNodes = async (
   // as the relation nodes will never be deleted
   // it's best to fetch the content type and its relations separately and to populate
   // only one level of relation
-  const nodesToRemoveMap = buildNodesToRemoveMap(existingNodesMap, endpoints, allResults);
+  const nodesToRemoveMap = buildNodesToRemoveMap(
+    existingNodesMap,
+    endpoints,
+    allResults,
+    strapiConfig.prefix
+  );
 
   // Delete all nodes that should be deleted
   Object.entries(nodesToRemoveMap).forEach(([nodeName, nodesToDelete]) => {
@@ -144,7 +149,7 @@ exports.sourceNodes = async (
 
       await Promise.all(nodes.map((n) => actions.createNode(n)));
 
-      const nodeType = makeParentNodeName(ctx.schemas, uid);
+      const nodeType = makeParentNodeName(ctx.schemas, uid, strapiConfig.prefix);
 
       const mainEntryNode = nodes.find((n) => {
         return n && n.strapi_id === entity.id && n.internal.type === nodeType;
